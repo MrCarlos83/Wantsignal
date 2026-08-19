@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WantSignal — What do you want?</title>
+  <meta name="description" content="Search what people want, add your support, and track what gets granted." />
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#14161c; --panel2:#1b1e26; --text:#f5f7fb; --muted:#9aa3b2;
+      --line:#2a2f3a; --accent:#7c9cff; --accent2:#9f7cff; --good:#5bd39a; --warn:#f0c15b;
+      --radius:18px; --shadow:0 14px 40px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100vh}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:760px;margin:0 auto;min-height:100vh;padding:18px 16px 92px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 20px}
+    .brand{font-size:23px;font-weight:800;letter-spacing:-.04em}
+    .brand span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .pill{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:8px 11px;border-radius:999px;font-size:12px}
+    .hero{padding:24px 0 16px}
+    .hero h1{font-size:clamp(34px,9vw,58px);line-height:.98;letter-spacing:-.055em;margin:0 0 10px}
+    .hero p{color:var(--muted);font-size:16px;line-height:1.5;margin:0 0 22px}
+    .searchbox{display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);padding:10px;border-radius:22px;box-shadow:var(--shadow)}
+    .searchbox input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);padding:9px 8px;font-size:17px}
+    .primary{border:0;border-radius:14px;padding:11px 15px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:750}
+    .tabs{display:flex;gap:8px;overflow:auto;padding:14px 0 6px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+    .tab{white-space:nowrap;border:1px solid var(--line);background:transparent;color:var(--muted);padding:8px 12px;border-radius:999px;font-size:13px}
+    .tab.active{background:var(--text);color:#111;border-color:var(--text);font-weight:700}
+    .sectionHead{display:flex;justify-content:space-between;align-items:end;margin:20px 0 10px}
+    .sectionHead h2{font-size:18px;margin:0}.sectionHead span{font-size:12px;color:var(--muted)}
+    .feed{display:grid;gap:12px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+    .meta{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}.chip{font-size:11px;padding:5px 8px;border-radius:999px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+    .chip.status-granted{color:var(--good)}.chip.status-partial{color:var(--warn)}
+    .card h3{font-size:18px;line-height:1.25;margin:0 0 7px;letter-spacing:-.02em}
+    .card p{margin:0;color:var(--muted);line-height:1.45;font-size:14px}
+    .actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+    .wantBtn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:9px 11px;font-size:13px;font-weight:650}
+    .wantBtn.voted{border-color:#405a9c;background:#1c2a4b}
+    .count{color:var(--muted);font-size:12px;text-align:right}
+    .empty{padding:22px;border:1px dashed var(--line);border-radius:var(--radius);text-align:center;color:var(--muted)}
+    .empty strong{display:block;color:var(--text);margin-bottom:5px}
+    .leader{display:none}.leader.active{display:block}
+    .rank{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+    .rank:last-child{border-bottom:0}.rankNo{font-size:20px;font-weight:800;color:var(--muted)}.rankTitle{font-size:14px;font-weight:650}.rankCount{font-size:12px;color:var(--muted)}
+    .addPanel{display:none;margin-top:14px}.addPanel.active{display:block}
+    .field{display:grid;gap:6px;margin-bottom:11px}.field label{font-size:12px;color:var(--muted)}
+    .field input{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:11px 12px;outline:0}
+    .bottomnav{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(92vw,560px);display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:rgba(20,22,28,.92);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px;padding:7px;box-shadow:var(--shadow);z-index:20}
+    .navbtn{border:0;background:transparent;color:var(--muted);padding:9px 6px;border-radius:12px;font-size:12px}.navbtn.active{background:var(--panel2);color:var(--text);font-weight:700}
+    .footnote{margin:18px 0 4px;color:#707887;font-size:11px;line-height:1.45;text-align:center}
+    @media (min-width:700px){.app{padding-top:28px}.card{padding:18px}.hero{padding-top:38px}}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><span>WantSignal</span></div>
+      <div class="pill">Prototype • £0 MVP</div>
+    </header>
+
+    <div class="card" style="margin-bottom:14px;padding:12px 14px;font-size:12px;color:var(--muted)"><strong style="color:var(--text)">Interactive prototype:</strong> if buttons do not respond inside a file preview, download this HTML file and open it in Safari, Chrome, Edge or Firefox. The browser needs to run JavaScript for search, voting and adding wishes.</div>
+
+    <section id="homeView" class="view">
+      <div class="hero">
+        <h1>What do you want?</h1>
+        <p>Search what people want to change, add your support, and see what eventually gets granted.</p>
+        <div class="searchbox">
+          <input id="searchInput" aria-label="Search wishes" placeholder="Try: bring back Chicken Legend" />
+          <button class="primary" id="searchBtn">Search</button>
+        </div>
+      </div>
+
+      <div class="tabs" aria-label="Feed filters">
+        <button class="tab active" data-filter="trending">Trending</button>
+        <button class="tab" data-filter="wanted">Most Wanted</button>
+        <button class="tab" data-filter="rising">Rising</button>
+        <button class="tab" data-filter="granted">Granted</button>
+        <button class="tab" data-filter="new">New</button>
+      </div>
+
+      <div class="sectionHead"><h2 id="feedTitle">Trending wishes</h2><span id="resultNote">Example data</span></div>
+      <div id="feed" class="feed"></div>
+
+      <section id="addPanel" class="addPanel card">
+        <h3 style="margin-top:0">Add a new wish</h3>
+        <p style="color:var(--muted);font-size:14px">Can't find a match? Add it without needing to know any technical wording.</p>
+        <div class="field"><label for="newTitle">What do you want?</label><input id="newTitle" placeholder="e.g. Later buses in Birmingham" /></div>
+        <div class="field"><label for="newTopic">Topic or organisation</label><input id="newTopic" placeholder="e.g. Transport" /></div>
+        <button class="primary" id="addWishBtn">Create wish</button>
+      </section>
+    </section>
+
+    <section id="leaderView" class="view leader">
+      <div class="hero" style="padding-bottom:4px"><h1 style="font-size:40px">Leaderboard</h1><p>What people want most — and what is rising fastest.</p></div>
+      <div class="card" id="leaderboard"></div>
+    </section>
+
+    <p class="footnote">Prototype data is stored only in this browser using local storage. No account, server, API or paid service is used.</p>
+  </main>
+
+  <nav class="bottomnav" aria-label="Primary navigation">
+    <button class="navbtn active" data-nav="home">⌂<br>Home</button>
+    <button class="navbtn" data-nav="search">⌕<br>Search</button>
+    <button class="navbtn" data-nav="add">＋<br>Wish</button>
+    <button class="navbtn" data-nav="leader">🏆<br>Leaderboard</button>
+  </nav>
+
+  <script>
+    const starterWishes = [
+      {id:1,title:'Bring back the McDonald\'s Chicken Legend',topic:'McDonald\'s',category:'Food',count:12847,rising:98,status:'Wanted',created:'2026-08-19',desc:'Make the Chicken Legend a permanent UK menu option again.'},
+      {id:2,title:'Show timestamps on individual ChatGPT messages',topic:'ChatGPT',category:'Technology',count:8142,rising:74,status:'Partially granted',granted:'~August 2026',created:'2025-12-01',desc:'Show when each message was sent and make elapsed time easier to understand in long conversations.'},
+      {id:3,title:'Run more late-night buses around Birmingham',topic:'West Midlands transport',category:'Transport',count:7031,rising:88,status:'Wanted',created:'2026-07-10',desc:'More dependable late-night routes for shift workers and people travelling after events.'},
+      {id:4,title:'Let UK viewers legally watch every Premier League match live',topic:'Premier League',category:'Sport',count:22105,rising:91,status:'Wanted',created:'2026-06-04',desc:'Offer a legal way for UK fans to watch every match live instead of relying on the current blackout model.'},
+      {id:5,title:'Give users clearer control over what ChatGPT remembers',topic:'ChatGPT',category:'Technology',count:14562,rising:79,status:'Wanted',created:'2026-05-15',desc:'Let users choose which memories apply to an individual conversation or project.'},
+      {id:6,title:'Add a proper handheld Xbox mode for remote play and cloud gaming',topic:'Xbox',category:'Gaming',count:5322,rising:96,status:'Rising',created:'2026-08-10',desc:'A simplified handheld-first Xbox interface optimised for small screens.'},
+      {id:7,title:'Let streaming apps hide shows you have already finished',topic:'Streaming',category:'Entertainment',count:4689,rising:67,status:'Wanted',created:'2026-04-21',desc:'A simple hide/finished control so home screens stop resurfacing completed shows.'},
+      {id:8,title:'Add live local time awareness when timing matters',topic:'ChatGPT',category:'Technology',count:9683,rising:45,status:'Granted',granted:'~August 2026',created:'2025-12-15',desc:'Allow ChatGPT to understand the user\'s current local time for questions like “how long until…?”'}
+    ];
+
+    const key='wantsignal_wishes_v01', voteKey='wantsignal_votes_v01';
+    function safeLoad(key, fallback){
+      try { const raw=localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+      catch(e){ return fallback; }
+    }
+    let wishes = safeLoad(key, starterWishes);
+    let votes = safeLoad(voteKey, {});
+    let activeFilter='trending';
+
+    const feed=document.getElementById('feed');
+    const feedTitle=document.getElementById('feedTitle');
+    const resultNote=document.getElementById('resultNote');
+    const searchInput=document.getElementById('searchInput');
+    const addPanel=document.getElementById('addPanel');
+
+    function save(){
+      try { localStorage.setItem(key,JSON.stringify(wishes)); localStorage.setItem(voteKey,JSON.stringify(votes)); }
+      catch(e){}
+    }
+    function statusClass(status){return status==='Granted'?'status-granted':status==='Partially granted'?'status-partial':''}
+    function cardHTML(w){
+      const voted=!!votes[w.id];
+      const others=w.count;
+      const countText=voted ? `You & ${others.toLocaleString()} ${others===1?'other person':'people'} want this` : `${others.toLocaleString()} people want this`;
+      const dateBit=w.granted?` • ${w.granted}`:'';
+      return `<article class="card">
+        <div class="meta"><span class="chip">${w.topic}</span><span class="chip">${w.category}</span><span class="chip ${statusClass(w.status)}">${w.status}${dateBit}</span></div>
+        <h3>${w.title}</h3><p>${w.desc}</p>
+        <div class="actions"><button class="wantBtn ${voted?'voted':''}" data-vote="${w.id}">👍 ${voted?'You want this':'I want this too'}</button><div class="count">${countText}</div></div>
+      </article>`
+    }
+    function sorted(list,filter){
+      const a=[...list];
+      if(filter==='wanted') return a.sort((x,y)=>y.count-x.count);
+      if(filter==='rising') return a.sort((x,y)=>y.rising-x.rising);
+      if(filter==='granted') return a.filter(x=>x.status.includes('Granted')||x.status.includes('granted')).sort((x,y)=>y.count-x.count);
+      if(filter==='new') return a.sort((x,y)=>new Date(y.created)-new Date(x.created));
+      return a.sort((x,y)=>(y.count*.65+y.rising*120)-(x.count*.65+x.rising*120));
+    }
+    function render(list=wishes,note='Example data'){
+      feed.innerHTML=sorted(list,activeFilter).map(cardHTML).join('') || `<div class="empty"><strong>No matching wish yet.</strong>Try another phrase or add this as a new wish.</div>`;
+      resultNote.textContent=note;
+      bindVoteButtons();
+      renderLeaderboard();
+    }
+    function bindVoteButtons(){
+      document.querySelectorAll('[data-vote]').forEach(btn=>btn.onclick=()=>{
+        const id=btn.dataset.vote; votes[id]=!votes[id]; save(); render(currentSearch());
+      });
+    }
+    function currentSearch(){
+      const q=searchInput.value.trim().toLowerCase();
+      if(!q) return wishes;
+      const terms=q.split(/\s+/).filter(Boolean);
+      return wishes.filter(w=>{
+        const hay=`${w.title} ${w.topic} ${w.category} ${w.desc}`.toLowerCase();
+        return hay.includes(q) || terms.every(t=>hay.includes(t)) || terms.some(t=>t.length>2 && hay.includes(t));
+      });
+    }
+    function doSearch(){
+      const q=searchInput.value.trim();
+      if(!q){render(wishes);return}
+      const results=currentSearch();
+      feedTitle.textContent=results.length?`Results for “${q}”`:'No exact match yet';
+      render(results,`${results.length} match${results.length===1?'':'es'}`);
+      addPanel.classList.toggle('active',results.length===0);
+      if(results.length===0) document.getElementById('newTitle').value=q;
+    }
+    document.getElementById('searchBtn').onclick=doSearch;
+    searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
+    document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');activeFilter=t.dataset.filter;
+      feedTitle.textContent=t.textContent+' wishes';render(currentSearch());
+    });
+    document.getElementById('addWishBtn').onclick=()=>{
+      const title=document.getElementById('newTitle').value.trim();
+      const topic=document.getElementById('newTopic').value.trim()||'Other';
+      if(!title)return;
+      wishes.unshift({id:Date.now(),title,topic,category:'Other',count:0,rising:100,status:'Wanted',created:new Date().toISOString().slice(0,10),desc:'Community-submitted wish.'});
+      searchInput.value=''; addPanel.classList.remove('active'); save(); feedTitle.textContent='New wishes';activeFilter='new';render(wishes,'Saved on this device');
+    };
+    function renderLeaderboard(){
+      const top=[...wishes].sort((a,b)=>b.count-a.count).slice(0,8);
+      document.getElementById('leaderboard').innerHTML=`<div class="sectionHead" style="margin-top:0"><h2>Most Wanted</h2><span>By supporters</span></div>`+top.map((w,i)=>`<div class="rank"><div class="rankNo">${i+1}</div><div><div class="rankTitle">${w.title}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${w.topic} • ${w.status}</div></div><div class="rankCount">${w.count.toLocaleString()}</div></div>`).join('');
+    }
+    function showView(name){
+      document.getElementById('homeView').style.display=name==='leader'?'none':'block';
+      document.getElementById('leaderView').classList.toggle('active',name==='leader');
+      document.querySelectorAll('.navbtn').forEach(n=>n.classList.toggle('active',n.dataset.nav===name));
+      if(name==='search'){searchInput.focus();window.scrollTo({top:80,behavior:'smooth'});}
+      if(name==='add'){addPanel.classList.add('active');document.getElementById('newTitle').focus();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});}
+      if(name==='home'){window.scrollTo({top:0,behavior:'smooth'});}
+      if(name==='leader'){renderLeaderboard();window.scrollTo({top:0,behavior:'smooth'});}
+    }
+    document.querySelectorAll('.navbtn').forEach(n=>n.onclick=()=>showView(n.dataset.nav));
+    try { render(); } catch(e) {
+      feed.innerHTML='<div class="empty"><strong>Something went wrong loading the prototype.</strong>Please open the downloaded HTML file in Safari, Chrome, Edge or Firefox rather than the ChatGPT file preview.</div>';
+    }
+  </script>
+</body>
+</html>
